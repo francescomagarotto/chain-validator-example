@@ -1,4 +1,4 @@
-package com.francescomagarotto.chainvalidator;
+package com.francescomagarotto.chainvalidator.validators;
 
 
 import org.jetbrains.annotations.NotNull;
@@ -7,11 +7,12 @@ import java.util.Objects;
 
 
 @FunctionalInterface
-public interface Transform<I, O> {
+@SuppressWarnings("unused")
+public interface Extractor<I, O> {
     @NotNull
     O transform(I input);
 
-    default <V> Transform<V, O> map(@NotNull Transform<? super V, ? extends I> before) {
+    default <V> Extractor<V, O> map(@NotNull Extractor<? super V, ? extends I> before) {
         Objects.requireNonNull(before);
         return (V v) -> transform(before.transform(v));
     }
