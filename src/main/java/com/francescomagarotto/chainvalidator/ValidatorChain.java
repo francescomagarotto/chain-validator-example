@@ -7,16 +7,17 @@ import org.slf4j.LoggerFactory;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.WeakHashMap;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class ValidatorChain<E> {
     private final static Logger LOGGER = LoggerFactory.getLogger(ValidatorChain.class);
-    private final LinkedList<Pair<Predicate, Transform>> couples;
-    private final WeakHashMap<Pair<Predicate, Transform>, String> errors;
+    private final LinkedList<ValidatorPairs> couples;
+    private final WeakHashMap<ValidatorPairs, String> errors;
     private final E entity;
 
-    private ValidatorChain(E entity, LinkedList<Pair<Predicate, Transform>> couples, WeakHashMap<Pair<Predicate, Transform>, String> errors) {
+    private ValidatorChain(E entity, LinkedList<ValidatorPairs> couples, WeakHashMap<ValidatorPairs, String> errors) {
         this.entity = entity;
         this.couples = couples;
         this.errors = errors;
@@ -28,21 +29,21 @@ public class ValidatorChain<E> {
 
     public boolean validate() {
         boolean valid = true;
-        Iterator<Pair<Predicate, Transform>> pairIterator = couples.iterator();
-        Pair<Predicate, Transform> pair;
+        Iterator<ValidatorPairs> pairIterator = couples.iterator();
+        ValidatorPairs validatorPairs;
         while (pairIterator.hasNext() && valid) {
-            pair = pairIterator.next();
-            valid = pair.l.test(pair.r.transform(entity));
-            if (!valid) {
-                LOGGER.error(errors.get(pair));
+            validatorPairs = pairIterator.next();
+            valid = validatorPairs.p.test(validatorPairs.t.transform(entity));
+            if (!valid && errors.get(validatorPairs) != null) {
+                LOGGER.error(errors.get(validatorPairs));
             }
         }
         return valid;
     }
 
     public static class Chain<E> {
-        private final LinkedList<Pair<Predicate, Transform>> couples;
-        private final WeakHashMap<Pair<Predicate, Transform>, String> errors;
+        private final LinkedList<ValidatorPairs> couples;
+        private final WeakHashMap<ValidatorPairs, String> errors;
         private final E entity;
 
         public Chain(E entity) {
@@ -52,12 +53,12 @@ public class ValidatorChain<E> {
         }
 
         public <O> Chain<E> chain(Predicate<O> predicate, Transform<E, O> transform) {
-            couples.add(new Pair<>(predicate, transform));
+            couples.add(new ValidatorPairs(predicate, transform));
             return this;
         }
 
         public <O> Chain<E> chain(Predicate<O> predicate, Transform<E, O> transform, @NotNull String errorMessage) {
-            Pair p = new Pair<>(predicate, transform);
+            ValidatorPairs p = new ValidatorPairs(predicate, transform);
             couples.add(p);
             errors.put(p, errorMessage);
             return this;
@@ -68,29 +69,29 @@ public class ValidatorChain<E> {
         }
     }
 
-    public static class Pair<L, R> {
-        private L l;
-        private R r;
+    public static class ValidatorPairs {
+        private Predicate p;
+        private Transform t;
 
-        public Pair(L l, R r) {
-            this.l = l;
-            this.r = r;
+        public ValidatorPairs(Predicate p, Transform t) {
+            this.p = p;
+            this.t = t;
         }
 
-        public L getL() {
-            return l;
+        public Predicate getPredicate() {
+            return p;
         }
 
-        public R getR() {
-            return r;
+        public Transform getTransformer() {
+            return t;
         }
 
-        public void setL(L l) {
-            this.l = l;
+        public void setPredicate(Predicate p) {
+            this.p = p;
         }
 
-        public void setR(R r) {
-            this.r = r;
+        public void setTransform(Transform t) {
+            this.t = t;
         }
     }
 
