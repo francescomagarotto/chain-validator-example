@@ -70,7 +70,8 @@ public class ValidatorChain<E> {
          * @return the Chain instance
          * @param <O> the transform function return type
          */
-        public <O> Chain<E> chain(@NotNull Predicate<O> predicate, @NotNull Transform<E, O> transform) {
+        public <O> Chain<E> chain(@NotNull Predicate<O> predicate,
+                                  @NotNull Transform<E, O> transform) {
             couples.add(new ValidatorPairs(predicate, transform));
             return this;
         }
@@ -83,7 +84,9 @@ public class ValidatorChain<E> {
          * @return the Chain instance
          * @param <O> the transform function return type
          */
-        public <O> Chain<E> chain(@NotNull Predicate<O> predicate, @NotNull Transform<E, O> transform, @NotNull String errorMessage) {
+        public <O> Chain<E> chain(@NotNull Predicate<O> predicate,
+                                  @NotNull Transform<E, O> transform,
+                                  @NotNull String errorMessage) {
             ValidatorPairs p = new ValidatorPairs(predicate, transform);
             couples.add(p);
             errors.put(p, errorMessage);
