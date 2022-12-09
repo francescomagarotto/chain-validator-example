@@ -92,7 +92,7 @@ public class ValidatorChain<E> {
         }
 
         /**
-         * Bonds the chain
+         * Bond the chain
          * @return a new ValidatorChain instance
          */
         public ValidatorChain<E> bond() {
@@ -102,17 +102,22 @@ public class ValidatorChain<E> {
     }
 
     private static class Validator<I, O> {
+        private static final String EXTRACTOR_MUST_NOT_BE_NULL = "Extractor must not be null";
+        private static final String PREDICATE_MUST_NOT_BE_NULL = "Predicate must not be null";
         private final Function<I, O> extractor;
         private final Predicate<O> predicate;
-        private final String errorMessage;
+        @Nullable private final String errorMessage;
 
         public Validator(@NotNull Function<I, O> extractor, @NotNull Predicate<O> predicate) {
             this(extractor, predicate, null);
         }
 
-        public Validator(@NotNull Function<I, O> extractor, @NotNull Predicate<O> predicate, @Nullable String errorMessage) {
-            Objects.requireNonNull(extractor, "Extractor must not be null");
-            Objects.requireNonNull(predicate, "Predicate must not be null");
+        public Validator(
+                @NotNull Function<I, O> extractor,
+                @NotNull Predicate<O> predicate,
+                @Nullable String errorMessage) {
+            Objects.requireNonNull(extractor, EXTRACTOR_MUST_NOT_BE_NULL);
+            Objects.requireNonNull(predicate, PREDICATE_MUST_NOT_BE_NULL);
             this.extractor = extractor;
             this.predicate = predicate;
             this.errorMessage = errorMessage;

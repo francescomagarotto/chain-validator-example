@@ -3,6 +3,7 @@ package com.francescomagarotto.chainvalidator;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
+import com.francescomagarotto.chainvalidator.validators.ValidatorChain;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,7 +41,7 @@ public class ValidatorChainTest {
 	@Test
 	public void invalidExtractor() {
 		Assertions.assertThrows(IllegalArgumentException.class, () -> ValidatorChain.of(person)
-				.chain(null, Objects::nonNull));
+				.link(null, Objects::nonNull));
 	}
 
 	/**
@@ -50,80 +51,80 @@ public class ValidatorChainTest {
 	@Test
 	public void invalidPredicate() {
 		Assertions.assertThrows(IllegalArgumentException.class, () -> ValidatorChain.of(person)
-				.chain(p -> p.name, null));
+				.link(p -> p.name, null));
 	}
 
 	@Test
 	public void of() {
-		final ValidatorChain<Person> validatorChain = ValidatorChain.of(person).buildChain();
+		final ValidatorChain<Person> validatorChain = ValidatorChain.of(person).bond();
 
 		Assertions.assertNotNull(validatorChain);
 		Assertions.assertTrue(validatorChain.validate());
 	}
 
 	@Test
-	public void chainOfOne_true() {
+	public void linkOfOneTrue() {
 		final ValidatorChain<Person> validatorChain = ValidatorChain.of(person)
-				.chain(p -> p.name, name -> name.equals("Mario"))
-				.buildChain();
+				.link(p -> p.name, name -> name.equals("Mario"))
+				.bond();
 
 		Assertions.assertNotNull(validatorChain);
 		Assertions.assertTrue(validatorChain.validate());
 	}
 
 	@Test
-	public void chainOfOne_false() {
+	public void linkOfOneFalse() {
 		final ValidatorChain<Person> validatorChain = ValidatorChain.of(person)
-				.chain(p -> p.name, name -> name.equals("Mauro"))
-				.buildChain();
+				.link(p -> p.name, name -> name.equals("Mauro"))
+				.bond();
 
 		Assertions.assertNotNull(validatorChain);
 		Assertions.assertFalse(validatorChain.validate());
 	}
 
 	@Test
-	public void chainOfMore_true() {
+	public void linkOfMoreTrue() {
 		final ValidatorChain<Person> validatorChain = ValidatorChain.of(person)
-				.chain(p -> p.name, name -> name.equals("Mario"))
-				.chain(p -> p.surname, surname -> surname.equals("Rossi"))
-				.buildChain();
+				.link(p -> p.name, name -> name.equals("Mario"))
+				.link(p -> p.surname, surname -> surname.equals("Rossi"))
+				.bond();
 
 		Assertions.assertNotNull(validatorChain);
 		Assertions.assertTrue(validatorChain.validate());
 	}
 
 	@Test
-	public void chainOfMore_false() {
+	public void linkOfMoreFalse() {
 		final ValidatorChain<Person> validatorChain = ValidatorChain.of(person)
-				.chain(p -> p.name, name -> name.equals("Mauro"))
-				.chain(p -> p.surname, surname -> surname.equals("Bianchi"))
-				.buildChain();
+				.link(p -> p.name, name -> name.equals("Mauro"))
+				.link(p -> p.surname, surname -> surname.equals("Bianchi"))
+				.bond();
 
 		Assertions.assertNotNull(validatorChain);
 		Assertions.assertFalse(validatorChain.validate());
 	}
 
 	@Test
-	public void chainOfMore_mixed() {
+	public void linkOfMoreMixed() {
 		final ValidatorChain<Person> validatorChain = ValidatorChain.of(person)
-				.chain(p -> p.name, name -> name.equals("Mario"))
-				.chain(p -> p.surname, surname -> surname.equals("Bianchi"))
-				.buildChain();
+				.link(p -> p.name, name -> name.equals("Mario"))
+				.link(p -> p.surname, surname -> surname.equals("Bianchi"))
+				.bond();
 
 		Assertions.assertNotNull(validatorChain);
 		Assertions.assertFalse(validatorChain.validate());
 	}
 
 	@Test
-	public void chainOfMore_mixed_withErrorMessage() {
+	public void linkOfMoreMixedWithErrorMessage() {
 		initLogger();
 
 		final ValidatorChain<Person> validatorChain = ValidatorChain.of(person)
-				.chain(p -> p.name, name -> name.equals("Mario"))
-				.chain(p -> p.surname, surname -> surname.equals("Rossi"), "Invalid surname")
-				.chain(p -> p.age, age -> age > 18)
-				.chain(p -> p.developer, developer -> developer, "The person must be a developer!")
-				.buildChain();
+				.link(p -> p.name, name -> name.equals("Mario"))
+				.link(p -> p.surname, surname -> surname.equals("Rossi"), "Invalid surname")
+				.link(p -> p.age, age -> age > 18)
+				.link(p -> p.developer, developer -> developer, "The person must be a developer!")
+				.bond();
 
 		Assertions.assertNotNull(validatorChain);
 		Assertions.assertFalse(validatorChain.validate());
