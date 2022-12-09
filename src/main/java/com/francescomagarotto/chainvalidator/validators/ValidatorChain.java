@@ -101,7 +101,7 @@ public class ValidatorChain<E> {
 
     }
 
-    private static class Validator<I, O> {
+    public static class Validator<I, O> {
         private static final String EXTRACTOR_MUST_NOT_BE_NULL = "Extractor must not be null";
         private static final String PREDICATE_MUST_NOT_BE_NULL = "Predicate must not be null";
         private final Function<I, O> extractor;
