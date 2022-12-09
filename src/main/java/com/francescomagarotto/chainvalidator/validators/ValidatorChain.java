@@ -1,30 +1,32 @@
 package com.francescomagarotto.chainvalidator.validators;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.WeakHashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
-@SuppressWarnings({"rawtypes", "unchecked"})
+@SuppressWarnings("rawtypes")
 public class ValidatorChain<E> {
+
     private final static Logger LOGGER = LoggerFactory.getLogger(ValidatorChain.class);
-    private final LinkedList<ValidatorPairs> couples;
-    private final WeakHashMap<ValidatorPairs, String> errors;
+    private final List<Validator> validators;
     private final E entity;
 
-    private ValidatorChain(E entity, LinkedList<ValidatorPairs> couples, WeakHashMap<ValidatorPairs, String> errors) {
+    private ValidatorChain(E entity, List<Validator> validators) {
         this.entity = entity;
-        this.couples = couples;
-        this.errors = errors;
+        this.validators = validators;
     }
 
     /**
-     * Create a new chain of validators
-     * @param entity the domain element to validate
+     * Creates a new chain of validators
+     * @param entity the domain element and input type for extractor functions.
      * @return a new {@see Chain} of validators for the domain element.
      * @param <E> the type of the domain element
      */
@@ -33,62 +35,59 @@ public class ValidatorChain<E> {
     }
 
     /**
-     * Applies the extractor function and test the predicate
+     * Applies the extractor function and then tests the predicate
      * for each element in the chain.
      * @return true if all predicates return true, otherwise false.
      */
+    @SuppressWarnings("unchecked")
     public boolean validate() {
         boolean valid = true;
-        Iterator<ValidatorPairs> pairIterator = couples.iterator();
-        ValidatorPairs validatorPairs;
-        while (pairIterator.hasNext() && valid) {
-            validatorPairs = pairIterator.next();
-            valid = validatorPairs.p.test(validatorPairs.t.transform(entity));
-            if (!valid && errors.get(validatorPairs) != null) {
-                LOGGER.error(errors.get(validatorPairs));
+        Iterator<Validator> valdidatorsIterator = validators.iterator();
+        while (valdidatorsIterator.hasNext() && valid) {
+            Validator validator = valdidatorsIterator.next();
+            valid = validator.predicate.test(validator.extractor.apply(entity));
+            if (!valid && validator.errorMessage != null) {
+                LOGGER.error(validator.errorMessage);
             }
         }
         return valid;
     }
 
     public static class Chain<E> {
-        private final LinkedList<ValidatorPairs> couples;
-        private final WeakHashMap<ValidatorPairs, String> errors;
         private final E entity;
+        private final List<Validator> validators;
 
         public Chain(@NotNull E entity) {
-            this.couples = new LinkedList<>();
+            Objects.requireNonNull(entity);
             this.entity = entity;
-            this.errors = new WeakHashMap<>();
+            this.validators = new LinkedList<>();
         }
 
         /**
-         * AAdd an element to chain of validators
-         * @param extractor the extractor function from the domain element to predicate input type
+         * Links an element in the chain
          * @param predicate the predicate to test
+         * @param extractor the function that extracts the object from the domain element to pass into predicate
          * @return the Chain instance
          * @param <O> the extractor function return type
          */
-        public <O> Chain<E> link(@NotNull Extractor<E, O> extractor,
+        public <O> Chain<E> link(@NotNull Function<E, O> extractor,
                                   @NotNull Predicate<O> predicate) {
-            couples.add(new ValidatorPairs(extractor, predicate));
+            validators.add(new Validator<>(extractor, predicate));
             return this;
         }
 
         /**
-         * Add an element to chain of validators
-         * @param extractor the extractor function from the domain element to predicate input type
+         * Links an element in the chain
          * @param predicate the predicate to test
+         * @param extractor the function that extracts the object from the domain element to pass into predicate
          * @param errorMessage the error message to print in case the predicate test returns false
          * @return the Chain instance
          * @param <O> the transform function return type
          */
-        public <O> Chain<E> link(@NotNull Extractor<E, O> extractor,
+        public <O> Chain<E> link(@NotNull Function<E, O> extractor,
                                   @NotNull Predicate<O> predicate,
-                                  @NotNull String errorMessage) {
-            ValidatorPairs p = new ValidatorPairs(extractor, predicate);
-            couples.add(p);
-            errors.put(p, errorMessage);
+                                  @Nullable String errorMessage) {
+            validators.add(new Validator<>(extractor, predicate, errorMessage));
             return this;
         }
 
@@ -97,20 +96,32 @@ public class ValidatorChain<E> {
          * @return a new ValidatorChain instance
          */
         public ValidatorChain<E> bond() {
-            return new ValidatorChain<>(entity, couples, errors);
+            return new ValidatorChain<>(entity, validators);
         }
 
     }
 
-    private static class ValidatorPairs {
-        private final Extractor t;
-        private final Predicate p;
+    public static class Validator<I, O> {
+        private static final String EXTRACTOR_MUST_NOT_BE_NULL = "Extractor must not be null";
+        private static final String PREDICATE_MUST_NOT_BE_NULL = "Predicate must not be null";
+        private final Function<I, O> extractor;
+        private final Predicate<O> predicate;
+        @Nullable private final String errorMessage;
 
-        public ValidatorPairs(Extractor t, Predicate p) {
-            this.t = t;
-            this.p = p;
+        public Validator(@NotNull Function<I, O> extractor, @NotNull Predicate<O> predicate) {
+            this(extractor, predicate, null);
         }
 
+        public Validator(
+                @NotNull Function<I, O> extractor,
+                @NotNull Predicate<O> predicate,
+                @Nullable String errorMessage) {
+            Objects.requireNonNull(extractor, EXTRACTOR_MUST_NOT_BE_NULL);
+            Objects.requireNonNull(predicate, PREDICATE_MUST_NOT_BE_NULL);
+            this.extractor = extractor;
+            this.predicate = predicate;
+            this.errorMessage = errorMessage;
+        }
     }
 
 }
