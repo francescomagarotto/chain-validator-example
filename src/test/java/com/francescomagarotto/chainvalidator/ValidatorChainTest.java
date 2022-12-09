@@ -3,6 +3,7 @@ package com.francescomagarotto.chainvalidator;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
+import com.francescomagarotto.chainvalidator.validators.Validator;
 import com.francescomagarotto.chainvalidator.validators.ValidatorChain;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -132,7 +133,7 @@ public class ValidatorChainTest {
 	}
 
 	private void initLogger() {
-		final Logger logger = (Logger) LoggerFactory.getLogger(ValidatorChain.class);
+		final Logger logger = (Logger) LoggerFactory.getLogger(Validator.class);
 		memoryAppender = new MemoryAppender();
 		memoryAppender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
 		logger.addAppender(memoryAppender);
