@@ -1,4 +1,4 @@
-package com.francescomagarotto.chainvalidator;
+package com.francescomagarotto.chainvalidator.validators;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,27 +64,27 @@ public class ValidatorChain<E> {
         }
 
         /**
-         * Adds an element to the chain
+         * Links an element in the chain
          * @param predicate the predicate to test
          * @param extractor the function that extracts the object from the domain element to pass into predicate
          * @return the Chain instance
-         * @param <O> the transform function return type
+         * @param <O> the extractor function return type
          */
-        public <O> Chain<E> chain(@NotNull Function<E, O> extractor,
+        public <O> Chain<E> link(@NotNull Function<E, O> extractor,
                                   @NotNull Predicate<O> predicate) {
             validators.add(new Validator<>(extractor, predicate));
             return this;
         }
 
         /**
-         * Adds an element to the chain
+         * Links an element in the chain
          * @param predicate the predicate to test
          * @param extractor the function that extracts the object from the domain element to pass into predicate
          * @param errorMessage the error message to print in case the predicate test returns false
          * @return the Chain instance
          * @param <O> the transform function return type
          */
-        public <O> Chain<E> chain(@NotNull Function<E, O> extractor,
+        public <O> Chain<E> link(@NotNull Function<E, O> extractor,
                                   @NotNull Predicate<O> predicate,
                                   @Nullable String errorMessage) {
             validators.add(new Validator<>(extractor, predicate, errorMessage));
@@ -92,12 +92,13 @@ public class ValidatorChain<E> {
         }
 
         /**
-         * Builds the chain
+         * Bonds the chain
          * @return a new ValidatorChain instance
          */
-        public ValidatorChain<E> buildChain() {
+        public ValidatorChain<E> bond() {
             return new ValidatorChain<>(entity, validators);
         }
+
     }
 
     private static class Validator<I, O> {
