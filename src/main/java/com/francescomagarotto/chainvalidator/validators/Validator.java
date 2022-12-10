@@ -10,6 +10,10 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+/**
+ * @param <E> input entity type
+ * @param <P> projection type
+ */
 public class Validator<E, P> {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(Validator.class);
@@ -35,10 +39,17 @@ public class Validator<E, P> {
         this.errorMessage = errorMessage;
     }
 
-    public boolean valid(E input) {
-        boolean result = predicate.test(extractor.apply(input));
-        if (!result && StringUtils.isNotBlank(errorMessage)) {
-            LOGGER.error(errorMessage);
+    public boolean valid(@NotNull E input) {
+        boolean result = true;
+        try {
+            P projections = extractor.apply(input);
+            result = predicate.test(projections);
+            if (!result && StringUtils.isNotBlank(errorMessage)) {
+                LOGGER.error(errorMessage);
+            }
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage());
+            result = false;
         }
         return result;
     }

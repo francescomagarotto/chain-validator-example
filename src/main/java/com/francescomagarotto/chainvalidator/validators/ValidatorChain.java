@@ -16,22 +16,19 @@ public class ValidatorChain<E> {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(ValidatorChain.class);
     private final List<Validator<E, ?>> validators;
-    private final E entity;
 
-    private ValidatorChain(E entity, List<Validator<E, ?>> validators) {
-        this.entity = entity;
+    private ValidatorChain(List<Validator<E, ?>> validators) {
         this.validators = validators;
     }
 
     /**
      * Creates a new chain of validators
      *
-     * @param entity the domain element and input type for extractor functions.
-     * @param <E>    the type of the domain element
+     * @param <E> the type of the domain element
      * @return a new {@see Chain} of validators for the domain element.
      */
-    public static <E> Chain<E> of(E entity) {
-        return new Chain<>(entity);
+    public static <E> Chain<E> chain() {
+        return new Chain<>();
     }
 
     /**
@@ -40,23 +37,22 @@ public class ValidatorChain<E> {
      *
      * @return true if all predicates return true, otherwise false.
      */
-    public boolean validate() {
+    public boolean check(@NotNull E entity) {
+        Objects.requireNonNull(entity, "Entity must be not null!");
         boolean valid = true;
         Iterator<Validator<E, ?>> valdidatorsIterator = validators.iterator();
         while (valdidatorsIterator.hasNext() && valid) {
             Validator<E, ?> validator = valdidatorsIterator.next();
             valid = validator.valid(entity);
         }
+        LOGGER.info("Entity checked with result {}", valid);
         return valid;
     }
 
     public static class Chain<E> {
-        private final E entity;
         private final List<Validator<E, ?>> validators;
 
-        public Chain(@NotNull E entity) {
-            Objects.requireNonNull(entity);
-            this.entity = entity;
+        public Chain() {
             this.validators = new LinkedList<>();
         }
 
@@ -96,7 +92,7 @@ public class ValidatorChain<E> {
          * @return a new ValidatorChain instance
          */
         public ValidatorChain<E> bond() {
-            return new ValidatorChain<>(entity, validators);
+            return new ValidatorChain<>(validators);
         }
 
     }
